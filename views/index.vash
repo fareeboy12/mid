@@ -1,16 +1,216 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta>
     <title>@model.title</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"
+        integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA=="
+        crossorigin="anonymous" />
     <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"
+        integrity="sha512-wV7Yj1alIZDqZFCUQJy85VN+qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg=="
+        crossorigin="anonymous"></script>
+    <script>
+        var id = 0;
+        var ids = [];
+        $(document).ready(function () {
+
+            $.ajax({
+                url: "product/all"
+            }).then(function (products) {
+                const markup =
+                    `
+                
+                    ${products.map(products => `
+                        <div class="product shadow">
+                        <a href="#" class="item" productid="${products.pid}" oid="${products._id}">
+                            <div class="parent">
+                                <img class="pic" src="/images/${products.image}"
+                                    alt="${products.name}">
+                            </div>
+                            <table style="width:100%">
+                                <tbody>
+                                    <tr>
+                                        <td class="price"><span>PKR</span> <span>${products.price}</span></td>
+                                        <td class="stock"><span>Qty</span> <span>${products.qty}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="des">
+                                ${products.name}
+                            </div>
+                        </a>
+                        </div>
+                    `)}
+                `
+                $(".content").html(markup);
+                $(".bill").hide();
+            });
+
+
+
+            $("body").on("click", "a.item", function () {
+                var productid = $(this).attr("productid");
+                var oid = $(this).attr("oid");
+
+                //console.log(ids);
+                // console.log(productIds(productid));
+                
+                let array = $.inArray(oid, ids);
+                // console.log($.inArray(productid, ids));
+                if (array == -1) {
+                    console.log(ids);
+                    console.log($.inArray(productid, ids));
+                    productIds(oid);
+                    cart(productid);
+                }
+
+
+            });
+
+
+
+            $("#checkout").on("click", function(){
+                console.log(ids);
+                $.ajax({
+                    url: "order/add",
+                    data: ids
+                }).then(function(){
+                    $(".bill").hide();
+                });
+            });
+
+
+
+
+
+
+
+            $("#search").on("input", function (e) {
+                var searchvalue = $(this).val();
+                if (searchvalue) {
+                    $.ajax({
+                        url: `/product/search/${searchvalue}`
+                    }).then(function (products) {
+                        const markup =
+                            `
+                        <div class="product shadow">
+                        ${products.map(products => `
+                        <a href="#" class="item" productid="${products.pid}">
+                            <div class="parent">
+                                <img class="pic" src="/images/${products.image}"
+                                    alt="${products.name}">
+                            </div>
+                            <table style="width:100%">
+                                <tbody>
+                                    <tr>
+                                        <td class="price"><span>PKR</span> <span>${products.price}</span></td>
+                                        <td class="stock"><span>Qty</span> <span>${products.qty}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="des">
+                                ${products.name}
+                            </div>
+                        </a>
+                        `)}
+                    </div>
+                        `
+                        $(".content").html(markup);
+                    })
+                }
+                else {
+                    $.ajax({
+                        url: "product/all"
+                    }).then(function (products) {
+                        const markup =
+                            `
+                
+                    ${products.map(products => `
+                        <div class="product shadow">
+                        <a href="#" class="item" productid="${products.pid}">
+                            <div class="parent">
+                                <img class="pic" src="/images/${products.image}"
+                                    alt="${products.name}">
+                            </div>
+                            <table style="width:100%">
+                                <tbody>
+                                    <tr>
+                                        <td class="price"><span>PKR</span> <span>${products.price}</span></td>
+                                        <td class="stock"><span>Qty</span> <span>${products.qty}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="des">
+                                ${products.name}
+                            </div>
+                        </a>
+                        </div>
+                    `)}
+                `
+                        $(".content").html(markup);
+                        $(".bill").hide();
+                    });
+                }
+            });
+
+        });
+
+
+
+        function cart(productid) {
+            $(".bill").show();
+            let row = $("a[productid=" + productid + "]").children();
+            let image = $(row).eq(0).children().eq(0).attr("src");
+            let price = $(row).eq(1).children().eq(0).children().eq(0).children().eq(0).children().eq(1).text();
+            var newprice = parseInt(price);
+            let qty = $(row).eq(1).children().eq(0).children().eq(0).children().eq(1).children().eq(1).text();
+            let des = $(row).eq(2).text();
+
+            $(".bill table tbody").append(
+                `
+                <tr>
+                    <td>${id++}</td>
+                    <td>
+                        <img src="${image}" width="75" style="margin:auto">
+                    </td>
+                    <td style="text-align: left; padding-left: 10px;">
+                        ${des}
+                    </td>
+                    <td>${price}</td>
+                    <td>
+                        <input type="number" class="qty txt" value="1" min="1" max="${qty}">
+                    </td>
+                    <td>${newprice * $(".qty").val()}</td>
+                </tr>
+                `);
+
+            var total = total + (newprice * $(".qty").val());
+            $("tfoot tr td:last-child").text(total);
+        }
+
+        function productIds(productid) {
+            ids.push(productid)
+            //return ids;
+        }
+
+
+    </script>
 </head>
+
 <body style="background-color: #f4f4f4;">
     <h2 style="color: navy; ">Chase Up</h2>
     <table style="width: 100%;">
         <tbody>
             <tr>
-                <td style="width: 50%;"><input type="text" class="form-control" placeholder="search"></td>
+                <td style="width: 50%;"><input type="text" class="form-control" id="search" placeholder="search"></td>
                 <td style="width: 50%; text-align: right;">
                     <a href="#" id="checkout">
                         <h2 style="color: green;">Check Out</h2>
@@ -25,26 +225,7 @@
     </table>
 
     <div id="products" class="content">
-        <div class="product shadow">
-            <a href="#" class="item">
-                <div class="parent">
-                    <img class="pic" src="/images/1000000287831-7-1611848185221.jpg"
-                        alt="Rose Petal Pop-Up Soft &amp; Gentle Black Tissue - 150x2 Ply">
-                </div>
-                <table style="width:100%">
-                    <tbody>
-                        <tr>
-                            <td class="price">PKR 89</td>
-                            <td class="stock">Qty 20</td>
-                        </tr>
-                    </tbody>
-                </table>
 
-                <div class="des">
-                    Rose Petal Pop-Up Soft &amp; Gentle Black Tissue - 150x2 Ply
-                </div>
-            </a>
-        </div>
     </div>
     <div id="bill" class="bill" style="">
         <table style="width: 540px;">
@@ -59,20 +240,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>
-                        <img src="/images/1000000287831-7-1611848185221.jpg" width="75" style="margin:auto">
-                    </td>
-                    <td style="text-align: left; padding-left: 10px;">
-                        Rose Petal Pop-Up Soft &amp; Gentle Black Tissue - 150x2 Ply
-                    </td>
-                    <td>89</td>
-                    <td>
-                        <input type="number" class="qty txt" value="1">
-                    </td>
-                    <td>89</td>
-                </tr>
+
             </tbody>
             <tfoot>
                 <tr style="border-top: 2px solid #585858;">
@@ -81,7 +249,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td>89</td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>
