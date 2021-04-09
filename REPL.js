@@ -23,11 +23,17 @@ const db = require('./models')
 //     })
 
 
-db.Order.find({ orderId: 1 })
-.populate('items.product')
-.then(order => {
-    console.log(JSON.stringify(order, null, '  '));
+// db.Order.find({ orderId: 1 })
+// .populate('items.product')
+// .then(order => {
+//     console.log(JSON.stringify(order, null, '  '));
+//     process.exit();
+// })
+
+// db.Product.createIndex( { name: "text", description: "text" } );
+
+db.Product.find({ $text: { $search: "cool" } }).then((products) => {
+    console.log(JSON.stringify(products, null, "\t"));
     process.exit();
-})
-
-
+    // res.status(200).json(products);
+});
